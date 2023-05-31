@@ -1348,7 +1348,7 @@ float3 uncompress_bjorn(float3 xyz)
     if (cc_et == 0)
     {
       // NOTE: custom scaler 0.275 instead of 0.25 in CAM16
-      e_t = 0.275f * (cos(2.0f + h * PI / 180.0f) + 3.8f);
+      e_t = 0.275f * (cos(2.0f + radians(h)) + 3.8f);
     }
     // Hellwig2022
     // CAM16 vs Hellwig2022: https://onlinelibrary.wiley.com/cms/asset/60788dfc-6bae-4949-bf8d-bd8c3467aef8/col22792-fig-0005-m.jpg
