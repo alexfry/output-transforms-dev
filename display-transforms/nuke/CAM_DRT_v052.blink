@@ -405,12 +405,12 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 
   float3 float3spow( float3 base, float exponent )
   {
-      return float3(spow(base.x, exponent), spow(base.y, exponent), spow(base.z, exponent));
+    return float3(spow(base.x, exponent), spow(base.y, exponent), spow(base.z, exponent));
   }
 
   float3 float3sign( float3 v )
   {
-      return float3(sign(v.x), sign(v.y), sign(v.z));
+    return float3(sign(v.x), sign(v.y), sign(v.z));
   }
 
   float3 float3abs( float3 a )
@@ -418,15 +418,14 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     return fabs(a);
   }
 
-    // "safe" div
-    float sdiv( float a, float b )
-    {
-        if(b == 0.0f)
-        {
-        return 0.0f;
-        }
-        return a / b;
-        }
+  // "safe" div
+  float sdiv( float a, float b )
+  {
+    if(b == 0.0f)
+      return 0.0f;
+
+    return a / b;
+  }
     
   float clip(float x, float a, float b)
   {
@@ -615,9 +614,9 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     // # Assemble the matrix
     float Mdata[] =
     {
-            Sr * r.x, Sr * r.y, Sr * (1.0f - r.x - r.y),
-            Sg * g.x, Sg * g.y, Sg * (1.0f - g.x - g.y),
-            Sb * b.x, Sb * b.y, Sb * (1.0f - b.x - b.y),
+      Sr * r.x, Sr * r.y, Sr * (1.0f - r.x - r.y),
+      Sg * g.x, Sg * g.y, Sg * (1.0f - g.x - g.y),
+      Sb * b.x, Sb * b.y, Sb * (1.0f - b.x - b.y),
     };
 
     float MdataNukeOrder[] = {
@@ -670,15 +669,15 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 
   float3 post_adaptation_non_linear_response_compression_forward(float3 RGB, float F_L)
   {
-      float3 F_L_RGB = float3spow(F_L * float3abs(RGB) / 100.0f, 0.42f);
-      float3 RGB_c = (400.0f * sign(RGB) * F_L_RGB) / (27.13f + F_L_RGB);
-      return RGB_c;
+    float3 F_L_RGB = float3spow(F_L * float3abs(RGB) / 100.0f, 0.42f);
+    float3 RGB_c = (400.0f * sign(RGB) * F_L_RGB) / (27.13f + F_L_RGB);
+    return RGB_c;
   }
 
   float3 post_adaptation_non_linear_response_compression_inverse(float3 RGB,float F_L)
   {
-      float3 RGB_p =  (float3sign(RGB) * 100.0f / F_L * float3spow((27.13f * float3abs(RGB)) / (400.0f - float3abs(RGB)), 1.0f / 0.42f) );
-      return RGB_p;
+    float3 RGB_p =  (float3sign(RGB) * 100.0f / F_L * float3spow((27.13f * float3abs(RGB)) / (400.0f - float3abs(RGB)), 1.0f / 0.42f) );
+    return RGB_p;
   }
 
   // convert HSV cylindrical projection values to RGB
@@ -726,20 +725,20 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     
     if (JM.x < focusJ)
     {
-        b = 1.0f - JM.y / slope_gain;
+      b = 1.0f - JM.y / slope_gain;
     } 
     else
     {
-        b= -(1.0f + JM.y / slope_gain + maxJ * JM.y / (focusJ * slope_gain));
+      b = -(1.0f + JM.y / slope_gain + maxJ * JM.y / (focusJ * slope_gain));
     } 
 
     if (JM.x < focusJ)
     {
-        c = -JM.x;
+      c = -JM.x;
     } 
     else
     {
-        c = maxJ * JM.y / slope_gain + JM.x;
+      c = maxJ * JM.y / slope_gain + JM.x;
     }
 
     float root = sqrt(b*b - 4.0f * a * c);
@@ -800,29 +799,29 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 
   float3 viewingConditionsToSurround(int viewingConditions)
   {
-      float3 newSurround;
-      // hack to turn incoming int value into surround coeffs
-      if (viewingConditions == 0)
-      {
-          // "Dark": InductionFactors_CIECAM02(0.8, 0.525, 0.8),
-          newSurround = float3(0.8, 0.525, 0.8);
-      }
-      else if (viewingConditions == 1)
-      {
-          // "Dim": InductionFactors_CIECAM02(0.9, 0.59, 0.9),
-          newSurround = float3(0.9, 0.59, 0.9);
-      }
-      else if (viewingConditions == 2)
-      {
-          // "Average": InductionFactors_CIECAM02(1, 0.69, 1),
-          newSurround = float3(1.0, 0.69, 1.0);
-      }
-      else if (viewingConditions == 3)
-      {
-          // Pull from external input
-          newSurround = userSurround;
-      }
-      return newSurround;
+    float3 newSurround;
+    // hack to turn incoming int value into surround coeffs
+    if (viewingConditions == 0)
+    {
+      // "Dark": InductionFactors_CIECAM02(0.8, 0.525, 0.8),
+      newSurround = float3(0.8, 0.525, 0.8);
+    }
+    else if (viewingConditions == 1)
+    {
+      // "Dim": InductionFactors_CIECAM02(0.9, 0.59, 0.9),
+      newSurround = float3(0.9, 0.59, 0.9);
+    }
+    else if (viewingConditions == 2)
+    {
+      // "Average": InductionFactors_CIECAM02(1, 0.69, 1),
+      newSurround = float3(1.0, 0.69, 1.0);
+    }
+    else if (viewingConditions == 3)
+    {
+      // Pull from external input
+      newSurround = userSurround;
+    }
+    return newSurround;
   }
 
   // convert XYZ tristimulus values to the CAM J (lightness), M (colorfulness) and h (hue) correlates
@@ -1018,10 +1017,10 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
   // convert CAM J (lightness), M (colorfulness) and h (hue) correlates to  RGB values in the output colorspace
   float3 JMh_to_luminance_RGB(float3 JMh)
   {
-      float3 luminanceXYZ = JMh_to_XYZ( JMh, refWhite, outputViewingConditions , L_A, Y_b, discountIlluminant_mid, HK_mode_mid);
-      float3 luminanceRGB = vector_dot(XYZ_to_RGB_output, luminanceXYZ);
+    float3 luminanceXYZ = JMh_to_XYZ( JMh, refWhite, outputViewingConditions , L_A, Y_b, discountIlluminant_mid, HK_mode_mid);
+    float3 luminanceRGB = vector_dot(XYZ_to_RGB_output, luminanceXYZ);
 
-      return luminanceRGB;
+    return luminanceRGB;
   }
 
   // convert linear RGB values with the limiting primaries to CAM J (lightness), M (colorfulness) and h (hue) correlates
@@ -1033,14 +1032,14 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     return JMh;
   }
 
-    // convert linear RGB values with the limiting primaries to CAM J (lightness), M (colorfulness) and h (hue) correlates
-    float3 reach_RGB_to_JMh(float3 RGB)
-    {
-      float3 luminanceRGB = RGB * boundaryRGB *referenceLuminance;
-      float3 XYZ = vector_dot(RGB_to_XYZ_reach, luminanceRGB);
-      float3 JMh = XYZ_to_JMh(XYZ, refWhite, viewingConditions, L_A, Y_b, discountIlluminant_mid, HK_mode_mid);
-      return JMh;
-    }
+  // convert linear RGB values with the limiting primaries to CAM J (lightness), M (colorfulness) and h (hue) correlates
+  float3 reach_RGB_to_JMh(float3 RGB)
+  {
+    float3 luminanceRGB = RGB * boundaryRGB *referenceLuminance;
+    float3 XYZ = vector_dot(RGB_to_XYZ_reach, luminanceRGB);
+    float3 JMh = XYZ_to_JMh(XYZ, refWhite, viewingConditions, L_A, Y_b, discountIlluminant_mid, HK_mode_mid);
+    return JMh;
+  }
 
   // convert linear RGB values with the AP1 primaries to CAM J (lightness), M (colorfulness) and h (hue) correlates
   float3 AP1_RGB_to_JMh(float3 RGB)
@@ -1060,14 +1059,14 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     return RGB;
   }
 
-    // convert CAM J (lightness), M (colorfulness) and h (hue) correlates to linear RGB values with the reach primaries
-    float3 JMh_to_reach_RGB(float3 JMh)
-    {
-        float3 luminanceXYZ = JMh_to_XYZ( JMh, refWhite, viewingConditions, L_A, Y_b, discountIlluminant_mid, HK_mode_mid );
-        float3 luminanceRGB = vector_dot(XYZ_to_RGB_reach, luminanceXYZ);
-        float3 RGB = luminanceRGB / boundaryRGB / referenceLuminance;
-        return RGB;
-    }
+  // convert CAM J (lightness), M (colorfulness) and h (hue) correlates to linear RGB values with the reach primaries
+  float3 JMh_to_reach_RGB(float3 JMh)
+  {
+    float3 luminanceXYZ = JMh_to_XYZ( JMh, refWhite, viewingConditions, L_A, Y_b, discountIlluminant_mid, HK_mode_mid );
+    float3 luminanceRGB = vector_dot(XYZ_to_RGB_reach, luminanceXYZ);
+    float3 RGB = luminanceRGB / boundaryRGB / referenceLuminance;
+    return RGB;
+  }
 
   // XYZ to Hellwig2020 JMh
   //
@@ -1339,7 +1338,7 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     return float2(cuspJ,cuspM);
   }
 
-    float2 cuspFromTableAP1(float h)
+  float2 cuspFromTableAP1(float h)
   {
 
     float3 lo;
@@ -1547,7 +1546,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
   // Compresses colors inside the gamut with the aim for colorfulness to have an
   // appropriate rate of change from display black to display white, and from
   // achromatic outward to purer colors.
-  //
   float chromaCompression(float3 JMh, float origJ, float linear, int invert)
   {
     float M = JMh.y;
@@ -1561,11 +1559,9 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 
     if (!invert)
     {
-      //
       // Rescaling of M with the tonescaled J to get the M to the same range as
       // J after the tonescale.  The rescaling uses the Hellwig2022 model gamma to
       // keep the M/J ratio correct (keeping the chromaticities constant).
-      //
       M *= pow(JMh.x / origJ, model_gamma);
 
       if (applyInGamutCompression)
@@ -1573,22 +1569,18 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
         // Normalize M with the rendering space cusp M
         M /= Mnorm;
 
-        //
         // Expand the colorfulness by running the toe function in reverse.  The goal is to
         // expand less saturated colors less and more saturated colors more.  The expansion
         // increases saturation in the shadows and mid-tones but not in the highlights.
         // The 0.001 offset starts the expansions slightly above zero.  The sat_thr makes
         // the toe less aggressive near black to reduce the expansion of noise.
-        //
         if (applyInGamutExpansion)
           M = limit - toe(limit - M, limit - 0.001f, snJ * sat, sqrt(nJ * nJ + sat_thr), 0);
 
-        //
         // Compress the colorfulness.  The goal is to compress less saturated colors more and
         // more saturated colors less, especially in the highlights.  This step creates the
         // saturation roll-off in the highlights, but attemps to preserve pure colors.  This
         // mostly affects highlights and mid-tones, and does not compress shadows.
-        //
         M = toe(M, limit, nJ * compr, snJ, 0);
 
         // Clamp M to the rendering space
@@ -1695,7 +1687,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 
     if( ! applyTonecurve && !applyChromaCompression )
     {
-      // nothing else to do here
       return tonemappedJMh;
     }
 
@@ -1705,15 +1696,10 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     float3 monoTonemappedRGB = JMh_to_luminance_RGB(monoTonemappedJMh);
     float luminance = monoTonemappedRGB.x;
 
-    // Dummy value to init the var
-    float linear = 0.0f;
+    float linear = luminance;
     if( toneScaleMode == 1 )
     {
         linear = daniele_evo_rev(luminance / mmScaleFactor);
-    }
-    else
-    {
-        linear = luminance;
     }
 
     linear = linear*referenceLuminance;
@@ -1737,7 +1723,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     if (disableUpperHullGamma)
       return 1.0f;
 
-    // take float h, divide by 10, and lerp between index values from upperHullGamma_0
     int index = int(h);
     float t = (h - index);
     float gamma = 1.0f;
@@ -1751,15 +1736,12 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     }
 
     return gamma;
-    // return gamutTopGamma[0];
-    // debugPrint(&gamma,1,1); 
   }
 
   // reimplemented from https://github.com/nick-shaw/aces-ot-vwg-experiments/blob/master/python/intersection_approx.py
   float3 findGamutBoundaryIntersection(float3 JMh_s, float2 JM_cusp, float J_focus, float J_max, float slope_gain, float smoothness, float gamma_top)
   {
     float2 JM_source = float2(JMh_s.x, JMh_s.y);
-    // float gamma_top = hueDependantUpperHullGamma(JMh_s.z);
     float gamma_bottom = lowerHullGamma;
 
     float slope = 0.0f;
@@ -1770,8 +1752,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 
     float J_intersect_source = solve_J_intersect(JM_source, J_focus, J_max, slope_gain);
     float J_intersect_cusp = solve_J_intersect(JM_cusp, J_focus, J_max, slope_gain);
-
-    //   print("J-axis intersection: J = {:.3f}".format(J_intersect_source))
 
     if (J_intersect_source < J_focus)
     {
@@ -1786,10 +1766,8 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 
     float M_boundary_upper = JM_cusp.y * (J_max - J_intersect_cusp) * pow((J_max - J_intersect_source) / (J_max - J_intersect_cusp), 1.0f / gamma_top) / (slope * JM_cusp.y + J_max - JM_cusp.x);
 
-//     float M_boundary = smin(M_boundary_lower, M_boundary_upper, smoothness);
     float M_boundary = JM_cusp.y * smin(M_boundary_lower / JM_cusp.y, M_boundary_upper / JM_cusp.y, s);
 
-    // J_boundary is not actually needed, but the calculation would be as follows
     float J_boundary = J_intersect_source + slope * M_boundary;
 
     // print("Gamut boundary intersection: JM = [{:.3f}, {:.3f}]".format(J_boundary, M_boundary))
@@ -1832,22 +1810,18 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     float mf = m * f;
     float xi = 1.0f;
     float g1 = 1.0f/model_gamma;
-    // float g2 = 1.273f;
 
     float g2 = hueDependantUpperHullGamma(h);
-    // float g2 = upperHullGamma[0];
 
     if ( m*xc + c < yc)
     {
         //    below cusp
         xi = spow((1-mf) , (g1 - 1 ))  * ((yc*spow((c/yc) , (1.0/g1))) / (yc/xc-m));
-        // xi = cusp.x;
     }    
     else
     {
         //    above cusp
         xi =    spow((1+mf) , ((g2-1)))    *    (   xc * (limitJmax - yc) * spow(((limitJmax-c)/(limitJmax-yc)) , (1/g2))   / (m * xc + limitJmax - yc));
-        // xi = cusp.x;
     }
     float yi = (m * xi) +c;
     if (yi > limitJmax)
@@ -1856,8 +1830,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
         xi = 0.0f;
     }
     return float2(yi,xi);
-    // return float2(cusp.x,c);
-    // return float2(0.5f,0.5f);
   }
 
   float3 getLocusBoundary(float3 Jmh)
@@ -1913,15 +1885,14 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
       float intersectJ = solve_J_intersect(float2(Jmh.x,Jmh.y), focusJ, limitJmax, slope_gain);
       float slope;
       if (intersectJ < focusJ)
-	  {
-			slope = intersectJ * (intersectJ - focusJ) / (focusJ * slope_gain);
-	  }
-	  else
-	  {
-			slope = (limitJmax - intersectJ) * (intersectJ - focusJ) / (focusJ * slope_gain);
-	  } 
+      {
+        slope = intersectJ * (intersectJ - focusJ) / (focusJ * slope_gain);
+      }
+      else
+      {
+        slope = (limitJmax - intersectJ) * (intersectJ - focusJ) / (focusJ * slope_gain);
+      } 
       float boundaryNick = limitJmax * pow(intersectJ/limitJmax, model_gamma) * reachMaxM / (limitJmax - slope * reachMaxM);
-//       float boundaryNick = limitJmax * pow(intersectJ/limitJmax, lowerHullGamma) * reachMaxM / (limitJmax - slope * reachMaxM);
       return float3(Jmh.x,boundaryNick,Jmh.z);
     }
     float cuspTarget = reachMaxM * pow((Jmh.x/limitJmax), model_gamma);
@@ -2055,13 +2026,11 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
         // Alternate method shown in Oct 19 meeting
         float m = (JMh.x - projectJ) / JMh.y;
         JMboundary = findCurveIntersection(JMh.x,JMcusp,0.0f,JMh.z);
-        // JMboundary = find_gamut_intersection(JMcusp, project_from, project_to, smoothCusps, JMh.z);
     }
     else if (boundryIntersectionMethod == 2)
     {
-        // findGamutBoundaryIntersection(float2      JM_source, float2 JM_cusp, float J_focus, float J_max, float slope_gain, float smoothness)
         float gamma_top = hueDependantUpperHullGamma(JMh.z);
-        float3 nickBoundaryReturn =  findGamutBoundaryIntersection(        JMh,         JMcusp,        focusJ,   limitJmax,       slope_gain, smoothCusps,gamma_top);
+        float3 nickBoundaryReturn =  findGamutBoundaryIntersection(JMh, JMcusp, focusJ, limitJmax, slope_gain, smoothCusps,gamma_top);
         JMboundary = float2(nickBoundaryReturn.x,nickBoundaryReturn.y);
         project_to = float2(nickBoundaryReturn.z,0.0f);
         projectJ = nickBoundaryReturn.z;
@@ -2071,7 +2040,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     float4 interpolatedCompressionFuncParams;
     if( reachNick )
     {
-//       interpolatedCompressionFuncParams = getCompressionFuncParams(JMh);
       interpolatedCompressionFuncParams = getCompressionFuncParams(float3(JMboundary.x,JMboundary.y,JMh.z));
     }
     else
@@ -2085,7 +2053,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     // Compress the out of gamut color along the projection line
     float2 JMcompressed = project_from;
 
-//     if (JMh.x < limitJmax && JMboundary.y != 0.0f)
     if (JMh.x < limitJmax && JMh.y != 0.0f)
     {
         float v = project_from.y / JMboundary.y;
@@ -2110,7 +2077,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     }
     if (diagnosticMode == 18)
     {
-      // return float3(interpolatedCompressionFuncParams.y, interpolatedCompressionFuncParams.z, JMh.z);
       return float3(JMh.x, JMboundary.y, JMh.z);
     }
     if (diagnosticMode == 20)
@@ -2136,12 +2102,8 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 
     // recasting for compatibility with non iterative code
     float2 JMinput = float2(JMh.x, JMh.y);
-    // float3 JMh = inputJMh;
-
     float2 project_from = float2(JMh.x, JMh.y);
-
     float2 JMcusp = cuspFromTable( JMh.z);
-
     float focusJ = lerp(JMcusp.x, MidJ, cuspMidBlend);
     float focusDistanceGain = 1.0f;
 
@@ -2185,19 +2147,19 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     // float v = length(JMinput-achromaticIntercept) * normFact;
 
     // Get hue dependent compression parameters
-     float4 interpolatedCompressionFuncParams = getCompressionFuncParams(float3(JMh.x,JMboundary.y,JMh.z));
+    float4 interpolatedCompressionFuncParams = getCompressionFuncParams(float3(JMh.x,JMboundary.y,JMh.z));
 
-     // Compress the out of gamut color along the projection line
-     float2 JMcompressed = project_from;
-     float v = project_from.y / JMboundary.y;
-     if (v >= interpolatedCompressionFuncParams.x)
-     {
-       v = compressPowerP(v, interpolatedCompressionFuncParams.x,
-                          lerp(interpolatedCompressionFuncParams.z, interpolatedCompressionFuncParams.y, projectJ / limitJmax),
-                          interpolatedCompressionFuncParams.w, invert);
-       // JMcompressed = project_to + v * (JMboundary - project_to);
-       JMcompressed = float2(JMh.x,v*JMboundary.y);
-     }
+    // Compress the out of gamut color along the projection line
+    float2 JMcompressed = project_from;
+    float v = project_from.y / JMboundary.y;
+    if (v >= interpolatedCompressionFuncParams.x)
+    {
+      v = compressPowerP(v, interpolatedCompressionFuncParams.x,
+                         lerp(interpolatedCompressionFuncParams.z, interpolatedCompressionFuncParams.y, projectJ / limitJmax),
+                         interpolatedCompressionFuncParams.w, invert);
+      // JMcompressed = project_to + v * (JMboundary - project_to);
+      JMcompressed = float2(JMh.x,v*JMboundary.y);
+    }
 
     // hack to stop nan values after compression
     if (JMinput.x > limitJmax)
@@ -2419,7 +2381,7 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
       -0.000634146, 0.05855, 0.942084,
     };
 
-    // M Max data generated via an external Nukescript at a J value of 100
+    // M Max data generated via an external Nuke script at a J value of 100
     float LocusLimitMTable_data[]=
     {
       244.8230133, 245.4952393, 246.4431458, 247.1381531, 247.2368927, 246.8459778, 245.7083588, 244.2591095, 242.5463409, 240.4208374, 238.0180511, 235.4039917, 233.010849, 230.4004669, 227.8723602, 225.2279968, 222.7197876, 214.8562622, 206.1778564, 198.0664215, 190.9799347, 184.005127, 177.7472992, 172.2332611, 166.6447754, 161.64534, 156.9872284, 152.6203003, 148.3236084, 144.2987976, 140.8540192, 137.4315033, 134.3281555, 131.2306366, 128.3477631, 125.8098145, 123.1305542, 120.5120163, 118.3302231, 116.127861, 114.0526428, 112.1633072, 110.2943344, 108.4250336, 106.711853, 105.188797, 103.6860809, 102.2319641, 100.8348923, 99.51873779, 98.26163483, 97.04810333, 95.90451813, 94.84623718, 93.86389923, 92.9352951, 92.03639984, 91.15013885, 90.27630615, 89.43255615, 88.63536072, 87.8986969, 87.23329163, 86.63896942, 86.09989166, 85.60071564, 85.12715912, 84.66781616, 84.21458435, 83.76491547, 83.30849457, 82.86478424, 82.46378326, 82.11483002, 81.82078552, 81.58016968, 81.37005615, 81.18525696, 81.01979065, 80.86772156, 80.72546387, 80.59381104, 80.48122406, 80.40287018, 80.33755493, 80.30010986, 80.28891754, 80.28807831, 80.33933258, 80.44513702, 80.57379913, 80.71469879, 80.86810303, 81.03874207, 81.23072052, 81.44044495, 81.6555481, 81.901474, 82.20778656, 82.67211151, 83.1408844, 83.62628174, 84.0898056, 84.53721619, 84.99518585, 85.49137878, 86.03423309, 86.58794403, 87.16802979, 87.72124481, 88.51965332, 89.35781097, 90.16739655, 90.94639587, 91.75927734, 92.65882111, 93.6033783, 94.64561462, 95.68405914, 96.84765625, 97.98625183, 99.09587097, 100.2806396, 101.5832748, 103.0694122, 104.6378632, 106.2420197, 107.8503952, 109.5214844, 111.3000031, 113.1901169, 115.1414337, 117.1432114, 119.3193054, 121.7141724, 124.2319031, 126.4584961, 128.9876556, 131.6906891, 134.7160034, 137.8343048, 140.7224121, 143.7820892, 147.23909, 150.6812439, 154.0381317, 157.1765747, 160.5133972, 164.2957306, 168.1366272, 171.8247986, 175.4206543, 179.2828827, 182.0374146, 185.0783844, 188.2106171, 190.9611206, 193.3639221, 195.5132294, 197.58255, 199.4234161, 201.3786011, 203.1474609, 205.016037, 206.6236725, 208.1813812, 209.8205719, 211.2774353, 212.8192749, 214.4571686, 215.6442261, 216.4818726, 217.1617279, 217.7372131, 218.2023926, 218.4073486, 218.4278564, 217.6643677, 216.4666748, 215.1212463, 213.8158264, 212.5012817, 210.8331757, 208.8956146, 206.9006958, 204.9239197, 203.0310059, 201.2084045, 199.3484344, 197.3464355, 195.217453, 193.0449677, 190.9578705, 188.9528656, 187.0009918, 185.0068817, 182.9402924, 180.8367767, 178.7057037, 176.5325165, 174.445282, 172.4908905, 170.5744934, 168.5490723, 166.459259, 164.4333649, 162.5092621, 160.4579468, 158.491806, 156.6880035, 155.0045624, 153.295166, 151.4545441, 149.5910492, 147.7821808, 146.4078522, 144.8022614, 143.2662506, 141.8236542, 140.5029602, 139.225174, 137.8959045, 136.4792175, 135.0780334, 133.7389374, 132.7613525, 131.6787109, 130.6356354, 129.64328, 128.7269897, 127.8450623, 126.9439697, 126.0015182, 125.0760727, 124.1718826, 123.4704056, 122.8062363, 122.1408768, 121.501358, 120.9004822, 120.3225555, 119.7514191, 119.2011871, 118.7055511, 118.2950592, 117.9416199, 117.5793762, 117.2029953, 116.8356552, 116.4874039, 116.1693954, 115.9030762, 115.6935577, 115.5213852, 115.3659363, 115.2032318, 115.0445251, 114.9317932, 114.8815384, 114.8605118, 114.8510284, 114.8482819, 114.848465, 114.8521805, 114.8999329, 115.0081787, 115.1483612, 115.2983322, 115.511528, 115.7195816, 115.9448853, 116.2098999, 116.5264893, 116.8126144, 117.1579666, 117.5379944, 117.9048004, 118.3263168, 118.8006821, 119.2988586, 119.8310318, 120.3776703, 121.0383987, 121.6810684, 122.4489899, 123.207077, 124.071022, 124.9082108, 125.74823, 126.6865311, 127.4425888, 127.8552094, 128.1067963, 128.3630676, 128.6606598, 128.9203491, 129.2632141, 129.708252, 130.1131287, 130.5647278, 130.9923553, 131.5979462, 132.2623444, 132.8651428, 133.4651947, 134.1470337, 134.8683624, 135.683609, 136.6136017, 137.5203552, 138.3826599, 139.2931976, 140.2762299, 141.2150574, 142.3930054, 143.7060547, 145.0472565, 146.3404083, 147.6144257, 148.9406586, 150.3545532, 151.8509674, 153.4246826, 155.0567017, 156.7265472, 158.4546509, 160.2428131, 162.1348267, 164.1415863, 166.2302551, 168.4024506, 170.5583649, 172.6457672, 174.9460449, 177.2792664, 179.6472473, 182.1867218, 184.5882721, 187.3068848, 189.8807373, 192.5116577, 195.5551453, 198.5196381, 201.3429413, 203.941452, 206.8439484, 209.5599213, 212.4866943, 215.0750885, 217.929306, 220.6668701, 223.364151, 226.2115479, 228.9524536, 231.5583954, 234.405304, 237.0275879, 239.5091705, 242.0047455, 242.0177155
@@ -2476,42 +2438,42 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 
     if( primariesLimit == 0 )
     {
-//       XYZ_to_RGB_limit.setArray(XYZ_to_AP0_ACES_matrix_data);
+      // XYZ_to_RGB_limit.setArray(XYZ_to_AP0_ACES_matrix_data);
       limitRedForMatrix = float2(0.7347f, 0.2653);
       limitGreenForMatrix = float2(0.0f, 1.0f);
       limitBlueForMatrix = float2(0.0001, -0.077);
     }
     else if( primariesLimit == 1 )
     {
-//       XYZ_to_RGB_limit.setArray(XYZ_to_AP1_ACES_matrix_data);
+      // XYZ_to_RGB_limit.setArray(XYZ_to_AP1_ACES_matrix_data);
       limitRedForMatrix = float2(0.713f, 0.293f);
       limitGreenForMatrix = float2(0.165f, 0.830f);
       limitBlueForMatrix = float2(0.128f, 0.044f);
     }
     else if( primariesLimit == 2 )
     {
-//       XYZ_to_RGB_limit.setArray(XYZ_to_Rec709_D65_matrix_data);
+      // XYZ_to_RGB_limit.setArray(XYZ_to_Rec709_D65_matrix_data);
       limitRedForMatrix = float2(0.64f, 0.33f);
       limitGreenForMatrix = float2(0.3f, 0.6f);
       limitBlueForMatrix = float2(0.15f, 0.06f);
     }
     else if( primariesLimit == 3 )
     {
-//       XYZ_to_RGB_limit.setArray(XYZ_to_Rec2020_D65_matrix_data);
+      // XYZ_to_RGB_limit.setArray(XYZ_to_Rec2020_D65_matrix_data);
       limitRedForMatrix = float2(0.708f, 0.292f);
       limitGreenForMatrix = float2(0.170f, 0.797f);
       limitBlueForMatrix = float2(0.131f, 0.046f);
     }
     else if( primariesLimit == 4 )
     {
-//       XYZ_to_RGB_limit.setArray(XYZ_to_P3_D65_matrix_data);
+      // XYZ_to_RGB_limit.setArray(XYZ_to_P3_D65_matrix_data);
       limitRedForMatrix = float2(0.680f, 0.320f);
       limitGreenForMatrix = float2(0.265f, 0.690f);
       limitBlueForMatrix = float2(0.150f, 0.060f);
     }
     else
     {
-//       XYZ_to_RGB_limit.setArray(identity_matrix_data);
+      // XYZ_to_RGB_limit.setArray(identity_matrix_data);
       limitRedForMatrix = float2(1.0f, 0.0f);
       limitGreenForMatrix = float2(0.0f, 1.0f);
       limitBlueForMatrix = float2(0.0f, 0.0f);
@@ -2613,12 +2575,10 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 
     generate_panlrcm();
 
-    //
     // solving the RGB cusp from JMh is very expensive
     // instead we go the other way and start with a RGB cusp sweep
     // which is easily calculated by converting via HSV (Hue, 1.0, 1.0)
     // we then convert each cusp to JMh and add them to a table 
-    //
 
     gamutCuspTableSize = 360;
 
@@ -2758,51 +2718,34 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 
     midJ = XYZ_to_JMh(refWhite * daniele_c_t * mmScaleFactor, refWhite, outputViewingConditions, L_A_out, Y_b_out, discountIlluminant_mid, HK_mode_mid).x;
 
-    // quick test to see why table isn't getting populated
-    // gamutTopGamma[0] = 1.0f;
-
-    // limitJmax (assumed to match limitRGB white)
-    // limitJmax = limit_RGB_to_JMh(float3(1.0f)).x;
-
     // Find upper hull gamma values for the gamut mapper
     // start by taking a h angle
     // get the cusp J value for that angle
     // find a J value halfway to the Jmax
     // iterate through gamma values until the approximate max M is negative through the actual boundary
-
     for( int i = 0; i < gamutCuspTableSize; ++i )
     {
-     
      gamutTopGamma[i] = 1.0f;
-    //  gamutTopGamma[0] = 2.0f;
-    //  float3 cusp = gamutCuspTable[i];
      float2 JMcusp = cuspFromTable(float(i));
-     // create test value halfway between the cusp and the Jmax
-    //  float2 JMcusp = float2(gamutCuspTable[i].x, gamutCuspTable[i].y);
-     float slope_gain = limitJmax * focusDistance;
 
+     // create test value halfway between the cusp and the Jmax
+     float slope_gain = limitJmax * focusDistance;
      float3 testJmh = float3(JMcusp.x + ((limitJmax - JMcusp.x) / 2.0f ), JMcusp.y , float(i));
-    //  float maxRGBtestVal = daniele_m_0;
+
      float maxRGBtestVal = 1.0f;
      for( int Tg = 70; Tg < 170; ++Tg )
       {
-          // float sampleM = float(M);
         float topGamma = float(Tg) / 100.0f;
-        //                     findGamutBoundaryIntersection(float3 JMh_s   , float2 JM_cusp,     float J_focus, float J_max, float slope_gain, float smoothness, float gamma_top)
-        float3 approxLimit  =  findGamutBoundaryIntersection(        testJmh,         JMcusp, lerp(JMcusp.x, midJ, cuspMidBlend),   limitJmax,       slope_gain,      0.0f,       topGamma);
+        float3 approxLimit  =  findGamutBoundaryIntersection(testJmh, JMcusp, lerp(JMcusp.x, midJ, cuspMidBlend), limitJmax, slope_gain, 0.0f, topGamma);
 
         float3 newLimitRGB = JMh_to_limit_RGB(float3(approxLimit.x, approxLimit.y, float(i)));
-        // gamutTopGamma[i] = maxRGBtestVal;
         if (newLimitRGB.x > maxRGBtestVal || newLimitRGB.y > maxRGBtestVal || newLimitRGB.z > maxRGBtestVal)
         {
           gamutTopGamma[i] = topGamma;
-        //   gamutTopGamma[i] = 3.0f;
           break;
         }
       }
     }
-
-    // debugPrint(&gamutTopGamma,1,1); 
 
     // Cusp table for AP1 gamut
     {
@@ -2832,9 +2775,7 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
   void process()
   {
     SampleType(src) source = src();
-    // SampleType(extra) sourceExtra = src();
     float3 srcRGB(source.x, source.y, source.z);
-    // float3 extraRGB(sourceExtra.x, sourceExtra.y, sourceExtra.z);
     float3 dstRGB;
     float3 compressedJMh;
     float3 tonemappedJMh;
@@ -2944,13 +2885,11 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     {
       // output JMFocus
       diagnostic = float3(hueDependantUpperHullGamma(srcRGB.z),0.0f,0.0f);
-      // diagnostic = float3(gamutTopGamma[0],LocusLimitMTable[0],limitJmax);
     }
     else if (diagnosticMode == 22)
     {
     float2 JMcusp = cuspFromTable(srcRGB.z);
     // create test value halfway between the cusp and the Jmax
-   //  float2 JMcusp = float2(gamutCuspTable[i].x, gamutCuspTable[i].y);
     float slope_gain = limitJmax * focusDistance;
     diagnostic = float3(JMcusp.x + ((limitJmax - JMcusp.x) / 2.0f ), JMcusp.y , srcRGB.z);
     }
@@ -2958,7 +2897,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     {
     float2 JMcusp = cuspFromTable(srcRGB.z);
     // create test value halfway between the cusp and the Jmax
-   //  float2 JMcusp = float2(gamutCuspTable[i].x, gamutCuspTable[i].y);
     float slope_gain = limitJmax * focusDistance;
     float3 testJmh = float3(JMcusp.x + ((limitJmax - JMcusp.x) / 2.0f ), JMcusp.y , srcRGB.z);
     float3 approxLimit  =  findGamutBoundaryIntersection(        testJmh,         JMcusp,(JMcusp.x+38.0f)/2,   limitJmax,       slope_gain,      smoothCusps,       upperHullGamma[0]);
@@ -2969,7 +2907,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     {
     float2 JMcusp = cuspFromTable(srcRGB.z);
     // create test value halfway between the cusp and the Jmax
-   //  float2 JMcusp = float2(gamutCuspTable[i].x, gamutCuspTable[i].y);
     float slope_gain = limitJmax * focusDistance;
     float3 testJmh = float3(JMcusp.x + ((limitJmax - JMcusp.x) / 2.0f ), JMcusp.y , srcRGB.z);
     float3 approxLimit  =  findGamutBoundaryIntersection(        testJmh,         JMcusp,(JMcusp.x+38.0f)/2,   limitJmax,       slope_gain,      smoothCusps,       upperHullGamma[0]);
@@ -2990,8 +2927,8 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     }  
         else if (diagnosticMode == 101)
     {
-        // convert to linear XYZ luminance values
-        diagnostic = vector_dot(RGB_to_XYZ_input, srcRGB);
+      // convert to linear XYZ luminance values
+      diagnostic = vector_dot(RGB_to_XYZ_input, srcRGB);
     }
     else if (diagnosticMode == 102)
     {
@@ -3015,56 +2952,56 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     }
     else if (diagnosticMode == 106)
     {
-        // display luminance XYZ to display linear RGB
-        diagnostic = vector_dot(XYZ_to_RGB_output, srcRGB);
+      // display luminance XYZ to display linear RGB
+      diagnostic = vector_dot(XYZ_to_RGB_output, srcRGB);
     }
     else if (diagnosticMode == 107)
     {
-        // display linear RGB to display encoded RGB
-        diagnostic = luminanceToEncoding3( encodingOut, srcRGB);
+      // display linear RGB to display encoded RGB
+      diagnostic = luminanceToEncoding3( encodingOut, srcRGB);
     }
 
     ////// INVERSE PATHWAY
     
     else if (diagnosticMode == 200)
     {
-        // output display encoded RGB to display linear RGB
-        diagnostic = encodingToLuminance3(encodingOut, srcRGB);
+      // output display encoded RGB to display linear RGB
+      diagnostic = encodingToLuminance3(encodingOut, srcRGB);
     }
     else if (diagnosticMode == 201)
     {
-        // output display linear RGB to output display linear XYZ
-        diagnostic = vector_dot(RGB_to_XYZ_output, srcRGB);
+      // output display linear RGB to output display linear XYZ
+      diagnostic = vector_dot(RGB_to_XYZ_output, srcRGB);
     }
     else if (diagnosticMode == 202)
     {
-        // output XYZ to JMh
-        diagnostic = XYZ_to_JMh(srcRGB, limitWhite, viewingConditions, L_A_out, Y_b_out, discountIlluminant_out,HK_mode_out);
+      // output XYZ to JMh
+      diagnostic = XYZ_to_JMh(srcRGB, limitWhite, viewingConditions, L_A_out, Y_b_out, discountIlluminant_out,HK_mode_out);
     }
     else if (diagnosticMode == 203)
     {
-        // uncompress gamut
-        diagnostic = compressGamut(srcRGB, 1);
+      // uncompress gamut
+      diagnostic = compressGamut(srcRGB, 1);
     }    
     else if (diagnosticMode == 204)
     {
-        // inverse tonescale in JMh
+      // inverse tonescale in JMh
       diagnostic = inverseTonescale(srcRGB);  
     }  
     else if (diagnosticMode == 205)
     {
-        // inverted JMh back to XYZ
-        diagnostic = JMh_to_XYZ( srcRGB, inWhite, viewingConditions , L_A, Y_b, discountIlluminant_in, HK_mode_in);
+      // inverted JMh back to XYZ
+      diagnostic = JMh_to_XYZ( srcRGB, inWhite, viewingConditions , L_A, Y_b, discountIlluminant_in, HK_mode_in);
     }
     else if (diagnosticMode == 206)
     {
-        // XYZ back to luminance RGB
-        diagnostic = vector_dot(XYZ_to_RGB_input, srcRGB);
+      // XYZ back to luminance RGB
+      diagnostic = vector_dot(XYZ_to_RGB_input, srcRGB);
     }
     else if (diagnosticMode == 207)
     {
-        // luminance RGB to input encoding RGB
-        diagnostic = luminanceToEncoding3( encodingIn, srcRGB);
+      // luminance RGB to input encoding RGB
+      diagnostic = luminanceToEncoding3( encodingIn, srcRGB);
     }
 
     dst() = float4(diagnostic.x, diagnostic.y, diagnostic.z, source.w ); 
