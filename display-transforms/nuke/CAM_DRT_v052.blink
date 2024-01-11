@@ -1,4 +1,3 @@
-
 kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 {
   Image<eRead, eAccessPoint, eEdgeClamped> src; // the input image
@@ -121,7 +120,7 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     // Focus distance of the compression focal point from the achromatic axis
     float focusDistance;
 
-    // Gamut Compression Fuction Parameters
+    // Gamut Compression Function Parameters
     // Threshold / min Limit / max Limit / Power
     float4 compressionFuncParams;
     bool sixAxisCompressionMode;
@@ -315,7 +314,7 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     // the entries are then wrap-around shifted
     // so that the 'gamutCuspTable' starts with the lowest JMh.h value
     // both tables need to be declared here since temporary array variables
-    // in the init() fuction seem to crash Nuke on some systems
+    // in the init() function seem to crash Nuke on some systems
     float3 gamutCuspTableUnsorted[360];
     float3 gamutCuspTable[360];
     float3 gamutCuspTableUnsortedAP1[360];
@@ -330,9 +329,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
   {
 
   }
-
-// Functions used in ACES 2.0 candidate CAM DRT
-// Derived from v49
 
   // multiplies a 3D vector with a 3x3 matrix
   float3 vector_dot( float3x3 m, float3 v)
@@ -538,8 +534,8 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     return xyz_temp;
   }
 
-float3 uncompress_bjorn(float3 xyz)
-{
+  float3 uncompress_bjorn(float3 xyz)
+  {
     float C = (xyz.x+xyz.y+xyz.z)/3;
 
     float3 xyz_temp = xyz - C;
@@ -567,8 +563,7 @@ float3 uncompress_bjorn(float3 xyz)
     xyz_temp = xyz_temp * r + C;
 
     return xyz_temp;
-}
-
+  }
 
   float hue_angle_dependency_Hellwig2022(float hr)
   {
@@ -578,8 +573,7 @@ float3 uncompress_bjorn(float3 xyz)
     - 0.405 * sin(hr)
     + 0.080 * sin(2 * hr)
     + 0.792;
-    }
-
+  }
 
   float3x3  RGBPrimsToXYZMatrix(float2 rxy, float2 gxy, float2 bxy, float2 wxy,float Y, bool direction)
   {
@@ -700,7 +694,6 @@ float3 uncompress_bjorn(float3 xyz)
     RGB.z = (HSV.x<1.0f/6.0f?0.0f:HSV.x<2.0f/6.0f?0.0f:HSV.x<3.0f/6.0f?  X :HSV.x<4.0f/6.0f?  C :HSV.x<5.0f/6.0f?  C :  X )+m;
     return RGB;
   }
-
 
   // convert RGB to HSV cylindrical projection values
   float3 RGB_to_HSV( float3 RGB )
@@ -831,7 +824,6 @@ float3 uncompress_bjorn(float3 xyz)
       }
       return newSurround;
   }
-
 
   // convert XYZ tristimulus values to the CAM J (lightness), M (colorfulness) and h (hue) correlates
   // needs XYZ tristimulus values for the reference white and the viewing conditions as parameters
