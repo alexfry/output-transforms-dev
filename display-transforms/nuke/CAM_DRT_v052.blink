@@ -32,7 +32,7 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     // 1: Daniele Evo Curve
     int toneScaleMode;
 
-    // Disable Degree of Adaptation Model for Zhai2018 CAT
+    // Disable Degree of Adaptation
     // This is only effective if the limit primaries have a non-D65 white point
     // since the input conversion is assumed to be fully adapted
     // and the output conversion does not apply a CAT
@@ -73,7 +73,7 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     float chroma_compress;
     int cc_et;
     int ccReach;
-    // xy coordintes for chroma compression gamut
+    // xy coordinates for chroma compression gamut
     float2 crxy;
     float2 cgxy;
     float2 cbxy;
@@ -109,7 +109,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     // 6: Spectral Locus
     // 7: Chroma Compression Space
     int primariesReach;
-
 
     // Toggle Gamut Compression
     bool applyGamutCompression;
@@ -205,7 +204,7 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     // 1 = Thomas's custom primaries
     // 2 = live from params below
     int catDataSelection; // original vs modified CAT16 matrix
-    // xy coordintes for custom CAT matrix
+    // xy coordinates for custom CAT matrix
     float2 rxy;
     float2 gxy;
     float2 bxy;
@@ -224,7 +223,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     // Output vars
     float L_A_out;
     float Y_b_out;
-
 
   local:
 
@@ -305,7 +303,7 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     // Hellwig model's gamma (1 / cz)
     float model_gamma;
 
-    // the 1D LUT used for quickly findig the approximate limiting gamut cusp JMh coordinates
+    // the 1D LUT used for quickly finding the approximate limiting gamut cusp JMh coordinates
     // the samples are spaced by HSV hue increments of the limiting RGB gamut
     // so to find the correct entry for a given CAM hue (h) value 
     // one must search the table entries for the matching entry.z component
@@ -335,7 +333,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
 
 // Functions used in ACES 2.0 candidate CAM DRT
 // Derived from v49
-
 
   // multiplies a 3D vector with a 3x3 matrix
   float3 vector_dot( float3x3 m, float3 v)
@@ -401,7 +398,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     }
   }
 
-
   // clamp the components of a 3D vector between a min & max value
   float3 clamp3(float3 v, float min, float max)
   {
@@ -410,7 +406,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     v.z = clamp(v.z, min, max);
     return v;
   }
-
 
   float3 float3spow( float3 base, float exponent )
   {
@@ -421,7 +416,6 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
   {
       return float3(sign(v.x), sign(v.y), sign(v.z));
   }
-
 
   float3 float3abs( float3 a )
   {
@@ -468,7 +462,7 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
   }
 
   // "PowerP" compression function (also used in the ACES Reference Gamut Compression transform)
-  // values of v above  'treshold' are compressed by a 'power' function
+  // values of v above  'threshold' are compressed by a 'power' function
   // so that an input value of 'limit' results in an output of 1.0
   float compressPowerP( float v, float threshold, float limit, float power, int inverse )
   {
@@ -769,9 +763,11 @@ float3 uncompress_bjorn(float3 xyz)
     return intersectJ;
   }
 
-    // check if the 3D point 'v' is inside a cube with the dimensions cubeSize x cubeSize x cubeSize 
-  // the 'smoothing' parameter rounds off the edges and corners of the cube with the exception of the 0,0,0 and cubeSize x cubeSize x cubeSize corners
-  // a smoothing value of 0.0 applies no smoothing and 1.0 the maximum amount (smoothing values > 1.0 result in undefined behavior )
+  // check if the 3D point 'v' is inside a cube with a side length of cubeSize
+  // the 'smoothing' parameter rounds off the edges and corners of the cube with
+  // the exception of the (0,0,0) and (cubeSize, cubeSize, cubeSize) corners a
+  // smoothing value of 0.0 applies no smoothing and 1.0 the maximum amount
+  // (smoothing values > 1.0 results in undefined behavior )
   int isInsideCube( float3 v, float cubeSize, float smoothing)
   {
     float3 normv = v / cubeSize;
@@ -866,7 +862,7 @@ float3 uncompress_bjorn(float3 xyz)
     return spow((st2084_c_1 + st2084_c_2 * Y_p) / (st2084_c_3 * Y_p + 1.0f), st2084_m_2);
   }
 
-  // decode value 'v' with the inverse of the selected encoding fuction to luminance
+  // decode value 'v' with the inverse of the selected encoding function to luminance
   float encodingToLuminance(int encoding, float v)
   {
     if( encoding == 1 )
@@ -902,7 +898,7 @@ float3 uncompress_bjorn(float3 xyz)
     }
   }
 
-  // decode the components of a 3D vector 'v' with the inverse of the selected encoding fuction to luminance
+  // decode the components of a 3D vector 'v' with the inverse of the selected encoding function to luminance
   float3 encodingToLuminance3(int encoding, float3 v)
   {
     float3 lin;
@@ -913,7 +909,7 @@ float3 uncompress_bjorn(float3 xyz)
     return lin;
   }
 
-  // encode the linear luminance value 'v' with the encoding fuction selected by 'encoding'
+  // encode the linear luminance value 'v' with the encoding function selected by 'encoding'
   float luminanceToEncoding(int encoding, float v)
   {
     if( encoding == 1 )
@@ -949,7 +945,7 @@ float3 uncompress_bjorn(float3 xyz)
     }
   }
 
-  // encode the linear luminance value components of a 3D vector 'v' with the encoding fuction selected by 'encoding'
+  // encode the linear luminance value components of a 3D vector 'v' with the encoding function selected by 'encoding'
   float3 luminanceToEncoding3(int encoding, float3 v)
   {
     float3 enc;
@@ -1036,7 +1032,6 @@ float3 uncompress_bjorn(float3 xyz)
       return luminanceRGB;
   }
 
-
   // convert linear RGB values with the limiting primaries to CAM J (lightness), M (colorfulness) and h (hue) correlates
   float3 limit_RGB_to_JMh(float3 RGB)
   {
@@ -1063,7 +1058,6 @@ float3 uncompress_bjorn(float3 xyz)
     float3 JMh = XYZ_to_JMh(XYZ, refWhite, viewingConditions, L_A, Y_b, discountIlluminant_mid, HK_mode_mid);
     return JMh;
   }
-
 
   // convert CAM J (lightness), M (colorfulness) and h (hue) correlates to linear RGB values with the limiting primaries
   float3 JMh_to_limit_RGB(float3 JMh)
@@ -1107,7 +1101,7 @@ float3 uncompress_bjorn(float3 xyz)
   // NOTE: Following modifications have been made to stock Hellwig2022 model for this DRT:
   //
   // - Custom primaries
-  // - Eccentriticty factor has been removed
+  // - Eccentricity factor has been removed
   // - Compress mode
   //
   float3 XYZ_to_Hellwig2022_JMh( float3 XYZ, float3 XYZ_w, float L_A, float Y_b, float3 surround, bool discountIlluminant, bool HK_mode)
@@ -1307,7 +1301,6 @@ float3 uncompress_bjorn(float3 xyz)
         return XYZ;
     }
 
-
   // retrieve the JM coordinates of the limiting gamut cusp at the hue slice 'h'
   // cusps are very expensive to compute
   // and the DRT is only using them for lightness mapping
@@ -1392,7 +1385,6 @@ float3 uncompress_bjorn(float3 xyz)
 
     return float2(cuspJ,cuspM);
   }
-
 
   float2 cuspFromTableLocus(float h)
   {
@@ -1652,7 +1644,6 @@ float3 uncompress_bjorn(float3 xyz)
     }
   }
 
-
   float3 JMh_to_input_RGB(float3 JMh)
   {
     float3 luminanceXYZ = JMh_to_XYZ( JMh, inWhite, viewingConditions , L_A, Y_b, discountIlluminant_in, HK_mode_in);
@@ -1661,7 +1652,6 @@ float3 uncompress_bjorn(float3 xyz)
 
     return inputRGB;
   }
-
 
   float3 forwardTonescale( float3 inputJMh )
   {
@@ -1706,7 +1696,6 @@ float3 uncompress_bjorn(float3 xyz)
 
     return outputJMh;
   }
-
 
   float3 inverseTonescale( float3 JMh )
   {
@@ -1790,7 +1779,6 @@ float3 uncompress_bjorn(float3 xyz)
     float J_intersect_source = solve_J_intersect(JM_source, J_focus, J_max, slope_gain);
     float J_intersect_cusp = solve_J_intersect(JM_cusp, J_focus, J_max, slope_gain);
 
-
     //   print("J-axis intersection: J = {:.3f}".format(J_intersect_source))
 
     if (J_intersect_source < J_focus)
@@ -1800,7 +1788,6 @@ float3 uncompress_bjorn(float3 xyz)
     else
     {
         slope = (J_max - J_intersect_source) * (J_intersect_source - J_focus) / (J_focus * slope_gain);
-
     } 
 
     float M_boundary_lower = J_intersect_cusp * pow(J_intersect_source / J_intersect_cusp, 1 / gamma_bottom) / (JM_cusp.x / JM_cusp.y - slope);
@@ -1815,11 +1802,7 @@ float3 uncompress_bjorn(float3 xyz)
 
     // print("Gamut boundary intersection: JM = [{:.3f}, {:.3f}]".format(J_boundary, M_boundary))
 
-
     return float3(J_boundary, M_boundary,J_intersect_source);
-
-    // return float2(1.0f, 2.0f);
-      
   }
 
   // Approximation of the gamut intersection to a curved and smoothened triangle
@@ -1859,10 +1842,8 @@ float3 uncompress_bjorn(float3 xyz)
     float g1 = 1.0f/model_gamma;
     // float g2 = 1.273f;
 
-
     float g2 = hueDependantUpperHullGamma(h);
     // float g2 = upperHullGamma[0];
-
 
     if ( m*xc + c < yc)
     {
@@ -1886,9 +1867,8 @@ float3 uncompress_bjorn(float3 xyz)
     // return float2(cusp.x,c);
     // return float2(0.5f,0.5f);
   }
-        
 
-  float3 getLocusBoundry(float3 Jmh)
+  float3 getLocusBoundary(float3 Jmh)
   {
     float h = Jmh.z;
 
@@ -1899,7 +1879,7 @@ float3 uncompress_bjorn(float3 xyz)
     return float3(Jmh.x,cuspTarget,Jmh.z);
   }
 
-  float3 getReachBoundry(float3 Jmh)
+  float3 getReachBoundary(float3 Jmh)
   {
     float h = Jmh.z;
     float3 lo;
@@ -1956,7 +1936,6 @@ float3 uncompress_bjorn(float3 xyz)
     return float3(Jmh.x,cuspTarget,Jmh.z);
   }
 
-
   float4 getCompressionFuncParams(float3 Jmh)
   {
     float h = Jmh.z;
@@ -1975,7 +1954,7 @@ float3 uncompress_bjorn(float3 xyz)
         if(primariesReach != 6) // All of the primary based reach values
         {
             // use primary based reach
-            float locusMax = getReachBoundry(Jmh).y;
+            float locusMax = getReachBoundary(Jmh).y;
             float difference = max(1.0001f, locusMax / Jmh.y);
             float threshold = max(compressionFuncParams.x, 1.0f / difference);
             return float4(threshold,difference,difference,compressionFuncParams.w);
@@ -1983,7 +1962,7 @@ float3 uncompress_bjorn(float3 xyz)
         else
         {
             // use locus based reach
-            float locusMax = getLocusBoundry(Jmh).y;
+            float locusMax = getLocusBoundary(Jmh).y;
             float difference =  locusMax / Jmh.y;
             return float4(compressionFuncParams.x,difference,difference,compressionFuncParams.w);
         }
@@ -2033,9 +2012,7 @@ float3 uncompress_bjorn(float3 xyz)
         return compressionFuncParams;
       }
     }
-    
   }
-
 
   float3 compressGamut(float3 JMh, int invert)
   {
@@ -2044,10 +2021,8 @@ float3 uncompress_bjorn(float3 xyz)
         return compressGamutIterative(  JMh,  invert,  JMh.x );
     }
 
-
     float2 project_from = float2(JMh.x, JMh.y);
     float2 JMcusp = cuspFromTable(JMh.z);
-
 
     if (!applyGamutCompression)
       return JMh;
@@ -2094,10 +2069,10 @@ float3 uncompress_bjorn(float3 xyz)
     {
         // findGamutBoundaryIntersection(float2      JM_source, float2 JM_cusp, float J_focus, float J_max, float slope_gain, float smoothness)
         float gamma_top = hueDependantUpperHullGamma(JMh.z);
-        float3 nickBoundryReturn =  findGamutBoundaryIntersection(        JMh,         JMcusp,        focusJ,   limitJmax,       slope_gain, smoothCusps,gamma_top);
-        JMboundary = float2(nickBoundryReturn.x,nickBoundryReturn.y);
-        project_to = float2(nickBoundryReturn.z,0.0f);
-        projectJ = nickBoundryReturn.z;
+        float3 nickBoundaryReturn =  findGamutBoundaryIntersection(        JMh,         JMcusp,        focusJ,   limitJmax,       slope_gain, smoothCusps,gamma_top);
+        JMboundary = float2(nickBoundaryReturn.x,nickBoundaryReturn.y);
+        project_to = float2(nickBoundaryReturn.z,0.0f);
+        projectJ = nickBoundaryReturn.z;
     }
 
     // Get hue dependent compression parameters
@@ -2167,7 +2142,7 @@ float3 uncompress_bjorn(float3 xyz)
 
     float MidJ = XYZ_to_JMh( refWhite * daniele_c_t * mmScaleFactor, refWhite, outputViewingConditions, L_A_out, Y_b_out, discountIlluminant_mid, HK_mode_mid).x;
 
-    // recasting for compatability with non iterative code
+    // recasting for compatibility with non iterative code
     float2 JMinput = float2(JMh.x, JMh.y);
     // float3 JMh = inputJMh;
 
@@ -2232,9 +2207,7 @@ float3 uncompress_bjorn(float3 xyz)
        JMcompressed = float2(JMh.x,v*JMboundary.y);
      }
 
-
     // hack to stop nan values after compression
-
     if (JMinput.x > limitJmax)
     {
       JMcompressed = float2(limitJmax,0.0f);
@@ -2266,11 +2239,11 @@ float3 uncompress_bjorn(float3 xyz)
     }
   }
 
-  // find the JM coordinates of the smoothed boundary of the limiting gamut in ZCAM at the hue slice 'h' 
+  // find the JM coordinates of the smoothed boundary of the limiting gamut in JMh at the hue slice 'h' 
   // by searching along the line defined by 'JMSource' and 'JMFocus'
-  // the function will search outwards from where the line intersects the achromatic axis with a staring incement of 'startStepSize'
+  // the function will search outwards from where the line intersects the achromatic axis with a staring increment of 'startStepSize'
   // once the boundary has been crossed it will search in the opposite direction with half the step size
-  // and will repeat this as as many times as is set by the 'precision' paramter
+  // and will repeat this as as many times as is set by the 'precision' parameter
   float2 findBoundary(float2 JMSource, float2 JMFocus, float h, float3 XYZw, float3x3 XYZ_to_RGB, float smoothing, int precision, float startStepSize )
   {
 
@@ -2280,7 +2253,6 @@ float3 uncompress_bjorn(float3 xyz)
     {
        return achromaticIntercept;
     }
-
 
     float stepSize = startStepSize;
     float2 unitVector = normalize(achromaticIntercept - JMFocus);
@@ -2316,7 +2288,6 @@ float3 uncompress_bjorn(float3 xyz)
       }
     }
 
-
     float2 JMboundary = float2( clamp(JMtest.x, 0.0f, limitJmax), clamp(JMtest.y, 0.0f, limitMmax) );
     // float2 JMboundary = float2(JMtest.x, JMtest.y);
     return JMboundary;
@@ -2350,7 +2321,6 @@ float3 uncompress_bjorn(float3 xyz)
       panlrcm[i][2] *= n;
     }
   }
-
 
   void init()
   {
@@ -2462,7 +2432,6 @@ float3 uncompress_bjorn(float3 xyz)
     {
       244.8230133, 245.4952393, 246.4431458, 247.1381531, 247.2368927, 246.8459778, 245.7083588, 244.2591095, 242.5463409, 240.4208374, 238.0180511, 235.4039917, 233.010849, 230.4004669, 227.8723602, 225.2279968, 222.7197876, 214.8562622, 206.1778564, 198.0664215, 190.9799347, 184.005127, 177.7472992, 172.2332611, 166.6447754, 161.64534, 156.9872284, 152.6203003, 148.3236084, 144.2987976, 140.8540192, 137.4315033, 134.3281555, 131.2306366, 128.3477631, 125.8098145, 123.1305542, 120.5120163, 118.3302231, 116.127861, 114.0526428, 112.1633072, 110.2943344, 108.4250336, 106.711853, 105.188797, 103.6860809, 102.2319641, 100.8348923, 99.51873779, 98.26163483, 97.04810333, 95.90451813, 94.84623718, 93.86389923, 92.9352951, 92.03639984, 91.15013885, 90.27630615, 89.43255615, 88.63536072, 87.8986969, 87.23329163, 86.63896942, 86.09989166, 85.60071564, 85.12715912, 84.66781616, 84.21458435, 83.76491547, 83.30849457, 82.86478424, 82.46378326, 82.11483002, 81.82078552, 81.58016968, 81.37005615, 81.18525696, 81.01979065, 80.86772156, 80.72546387, 80.59381104, 80.48122406, 80.40287018, 80.33755493, 80.30010986, 80.28891754, 80.28807831, 80.33933258, 80.44513702, 80.57379913, 80.71469879, 80.86810303, 81.03874207, 81.23072052, 81.44044495, 81.6555481, 81.901474, 82.20778656, 82.67211151, 83.1408844, 83.62628174, 84.0898056, 84.53721619, 84.99518585, 85.49137878, 86.03423309, 86.58794403, 87.16802979, 87.72124481, 88.51965332, 89.35781097, 90.16739655, 90.94639587, 91.75927734, 92.65882111, 93.6033783, 94.64561462, 95.68405914, 96.84765625, 97.98625183, 99.09587097, 100.2806396, 101.5832748, 103.0694122, 104.6378632, 106.2420197, 107.8503952, 109.5214844, 111.3000031, 113.1901169, 115.1414337, 117.1432114, 119.3193054, 121.7141724, 124.2319031, 126.4584961, 128.9876556, 131.6906891, 134.7160034, 137.8343048, 140.7224121, 143.7820892, 147.23909, 150.6812439, 154.0381317, 157.1765747, 160.5133972, 164.2957306, 168.1366272, 171.8247986, 175.4206543, 179.2828827, 182.0374146, 185.0783844, 188.2106171, 190.9611206, 193.3639221, 195.5132294, 197.58255, 199.4234161, 201.3786011, 203.1474609, 205.016037, 206.6236725, 208.1813812, 209.8205719, 211.2774353, 212.8192749, 214.4571686, 215.6442261, 216.4818726, 217.1617279, 217.7372131, 218.2023926, 218.4073486, 218.4278564, 217.6643677, 216.4666748, 215.1212463, 213.8158264, 212.5012817, 210.8331757, 208.8956146, 206.9006958, 204.9239197, 203.0310059, 201.2084045, 199.3484344, 197.3464355, 195.217453, 193.0449677, 190.9578705, 188.9528656, 187.0009918, 185.0068817, 182.9402924, 180.8367767, 178.7057037, 176.5325165, 174.445282, 172.4908905, 170.5744934, 168.5490723, 166.459259, 164.4333649, 162.5092621, 160.4579468, 158.491806, 156.6880035, 155.0045624, 153.295166, 151.4545441, 149.5910492, 147.7821808, 146.4078522, 144.8022614, 143.2662506, 141.8236542, 140.5029602, 139.225174, 137.8959045, 136.4792175, 135.0780334, 133.7389374, 132.7613525, 131.6787109, 130.6356354, 129.64328, 128.7269897, 127.8450623, 126.9439697, 126.0015182, 125.0760727, 124.1718826, 123.4704056, 122.8062363, 122.1408768, 121.501358, 120.9004822, 120.3225555, 119.7514191, 119.2011871, 118.7055511, 118.2950592, 117.9416199, 117.5793762, 117.2029953, 116.8356552, 116.4874039, 116.1693954, 115.9030762, 115.6935577, 115.5213852, 115.3659363, 115.2032318, 115.0445251, 114.9317932, 114.8815384, 114.8605118, 114.8510284, 114.8482819, 114.848465, 114.8521805, 114.8999329, 115.0081787, 115.1483612, 115.2983322, 115.511528, 115.7195816, 115.9448853, 116.2098999, 116.5264893, 116.8126144, 117.1579666, 117.5379944, 117.9048004, 118.3263168, 118.8006821, 119.2988586, 119.8310318, 120.3776703, 121.0383987, 121.6810684, 122.4489899, 123.207077, 124.071022, 124.9082108, 125.74823, 126.6865311, 127.4425888, 127.8552094, 128.1067963, 128.3630676, 128.6606598, 128.9203491, 129.2632141, 129.708252, 130.1131287, 130.5647278, 130.9923553, 131.5979462, 132.2623444, 132.8651428, 133.4651947, 134.1470337, 134.8683624, 135.683609, 136.6136017, 137.5203552, 138.3826599, 139.2931976, 140.2762299, 141.2150574, 142.3930054, 143.7060547, 145.0472565, 146.3404083, 147.6144257, 148.9406586, 150.3545532, 151.8509674, 153.4246826, 155.0567017, 156.7265472, 158.4546509, 160.2428131, 162.1348267, 164.1415863, 166.2302551, 168.4024506, 170.5583649, 172.6457672, 174.9460449, 177.2792664, 179.6472473, 182.1867218, 184.5882721, 187.3068848, 189.8807373, 192.5116577, 195.5551453, 198.5196381, 201.3429413, 203.941452, 206.8439484, 209.5599213, 212.4866943, 215.0750885, 217.929306, 220.6668701, 223.364151, 226.2115479, 228.9524536, 231.5583954, 234.405304, 237.0275879, 239.5091705, 242.0047455, 242.0177155
     };
-
 
     // populate the input primaries matrix
     if( primariesIn == 0 )
@@ -2669,7 +2638,7 @@ float3 uncompress_bjorn(float3 xyz)
 
     // calculate the maximum expected J & M values for the given limit gamut
     // these are used as limiting values for the gamut boundary searches
-    // limitJmax (asumed to match limitRGB white)
+    // limitJmax (assumed to match limitRGB white)
     limitJmax = limit_RGB_to_JMh(float3(1.0f)).x;
 
     // limitMmax (assumed to coincide with one of the RGBCMY corners of the limitRGB cube)
@@ -2800,16 +2769,15 @@ float3 uncompress_bjorn(float3 xyz)
     // quick test to see why table isn't getting populated
     // gamutTopGamma[0] = 1.0f;
 
-    // limitJmax (asumed to match limitRGB white)
+    // limitJmax (assumed to match limitRGB white)
     // limitJmax = limit_RGB_to_JMh(float3(1.0f)).x;
 
     // Find upper hull gamma values for the gamut mapper
     // start by taking a h angle
     // get the cusp J value for that angle
     // find a J value halfway to the Jmax
-    // iterate through gamma values until the approxilate max M is negative through the actual boundry
+    // iterate through gamma values until the approximate max M is negative through the actual boundary
 
- 
     for( int i = 0; i < gamutCuspTableSize; ++i )
     {
      
@@ -2817,7 +2785,7 @@ float3 uncompress_bjorn(float3 xyz)
     //  gamutTopGamma[0] = 2.0f;
     //  float3 cusp = gamutCuspTable[i];
      float2 JMcusp = cuspFromTable(float(i));
-     // create test value halfway betwen the cusp and the Jmax
+     // create test value halfway between the cusp and the Jmax
     //  float2 JMcusp = float2(gamutCuspTable[i].x, gamutCuspTable[i].y);
      float slope_gain = limitJmax * focusDistance;
 
@@ -2842,9 +2810,7 @@ float3 uncompress_bjorn(float3 xyz)
       }
     }
 
-
     // debugPrint(&gamutTopGamma,1,1); 
-
 
     // Cusp table for AP1 gamut
     {
@@ -2870,7 +2836,6 @@ float3 uncompress_bjorn(float3 xyz)
     }
     }
   }
-
 
   void process()
   {
@@ -2910,7 +2875,6 @@ float3 uncompress_bjorn(float3 xyz)
       {
         diagnostic =  JMh;
       }
-
     }
     else if ( diagnosticMode == 2 || diagnosticMode == 99 )
     {
@@ -2941,12 +2905,12 @@ float3 uncompress_bjorn(float3 xyz)
     }
     else if (diagnosticMode == 12)
     {
-      // output gamut boundry
+      // output gamut boundary
       diagnostic = compressGamut(srcRGB, 1);
     }
     else if (diagnosticMode == 13)
     {
-      // output gamut boundry
+      // output gamut boundary
       diagnostic = compressGamut(srcRGB, invert);
     }
     else if (diagnosticMode == 14)
@@ -2966,18 +2930,18 @@ float3 uncompress_bjorn(float3 xyz)
     }
     else if (diagnosticMode == 17)
     {
-      // output Locus boundry
-      diagnostic = getLocusBoundry(srcRGB);
+      // output Locus boundary
+      diagnostic = getLocusBoundary(srcRGB);
     }
     else if (diagnosticMode == 18)
     {
-      // output gamut boundry
+      // output gamut boundary
       diagnostic = compressGamut(srcRGB, 0  );
     }
     else if (diagnosticMode == 19)
     {
-      // output Reach boundry
-      diagnostic = getReachBoundry(srcRGB);
+      // output Reach boundary
+      diagnostic = getReachBoundary(srcRGB);
     }
     else if (diagnosticMode == 20)
     {
@@ -2993,7 +2957,7 @@ float3 uncompress_bjorn(float3 xyz)
     else if (diagnosticMode == 22)
     {
     float2 JMcusp = cuspFromTable(srcRGB.z);
-    // create test value halfway betwen the cusp and the Jmax
+    // create test value halfway between the cusp and the Jmax
    //  float2 JMcusp = float2(gamutCuspTable[i].x, gamutCuspTable[i].y);
     float slope_gain = limitJmax * focusDistance;
     diagnostic = float3(JMcusp.x + ((limitJmax - JMcusp.x) / 2.0f ), JMcusp.y , srcRGB.z);
@@ -3001,7 +2965,7 @@ float3 uncompress_bjorn(float3 xyz)
     else if (diagnosticMode == 23)
     {
     float2 JMcusp = cuspFromTable(srcRGB.z);
-    // create test value halfway betwen the cusp and the Jmax
+    // create test value halfway between the cusp and the Jmax
    //  float2 JMcusp = float2(gamutCuspTable[i].x, gamutCuspTable[i].y);
     float slope_gain = limitJmax * focusDistance;
     float3 testJmh = float3(JMcusp.x + ((limitJmax - JMcusp.x) / 2.0f ), JMcusp.y , srcRGB.z);
@@ -3012,7 +2976,7 @@ float3 uncompress_bjorn(float3 xyz)
     else if (diagnosticMode == 24)
     {
     float2 JMcusp = cuspFromTable(srcRGB.z);
-    // create test value halfway betwen the cusp and the Jmax
+    // create test value halfway between the cusp and the Jmax
    //  float2 JMcusp = float2(gamutCuspTable[i].x, gamutCuspTable[i].y);
     float slope_gain = limitJmax * focusDistance;
     float3 testJmh = float3(JMcusp.x + ((limitJmax - JMcusp.x) / 2.0f ), JMcusp.y , srcRGB.z);
@@ -3020,7 +2984,6 @@ float3 uncompress_bjorn(float3 xyz)
     float3 newLimitRGB = JMh_to_limit_RGB(float3(approxLimit.x, approxLimit.y, srcRGB.z));
     diagnostic = newLimitRGB;
     }
-
 
     // extra modes to allow for easier breakout of the order of events.
     // modes starting with 100
@@ -3032,7 +2995,6 @@ float3 uncompress_bjorn(float3 xyz)
       // display encoding to display linear
       float3 inputRGB = clamp3(srcRGB, -HALF_MAXIMUM, HALF_MAXIMUM);
       diagnostic = encodingToLuminance3( encodingIn, inputRGB);
-      
     }  
         else if (diagnosticMode == 101)
     {
