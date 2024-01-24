@@ -84,6 +84,8 @@ Group {
  addUserKnob {20 sixAxisCompression n 1}
  sixAxisCompression 0
  addUserKnob {6 sixAxisCompressionMode +STARTLINE}
+ addUserKnob {6 BlinkScript1_DRT_CAM_Kernel_Locuscompressmode l Locuscompressmode +STARTLINE}
+ BlinkScript1_DRT_CAM_Kernel_Locuscompressmode true
  addUserKnob {19 compressionFuncParamsR}
  compressionFuncParamsR {0.2 1.4 {compressionFuncParamsR.g} 1}
  addUserKnob {6 compressionFuncParamsR_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
