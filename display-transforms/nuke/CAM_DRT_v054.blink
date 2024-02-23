@@ -69,9 +69,11 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     bool applyReachClamp;
     bool monochrome;
 
-    // Chroma compression params (limit, k1, k2)
+    // Chroma compression params
     float chroma_compress;
+    float chroma_compress_fact;
     float chroma_expand;
+    float chroma_expand_fact;
     float chroma_expand_thr;
     int cc_et;
     int ccReach;
@@ -159,6 +161,8 @@ kernel DRT_CAM_Kernel : ImageComputationKernel<ePixelWise>
     // How much the edges of the target RGB cube are smoothed when finding the gamut boundary 
     // in order to reduce visible contours at the gamut cusps
     float smoothCusps;
+    float smoothJ;   // Scaling factor for cusp J
+    float smoothM;   // Scaling factor for cusp M
 
     //
     // Output Parameters
@@ -1890,8 +1894,8 @@ float3 uncompress_bjorn(float3 xyz)
     float slope = 0.0f;
 
     float s = max(0.000001f, smoothness);
-    JM_cusp.x *= 1.0f + 0.055f * s;   // J
-    JM_cusp.y *= 1.0f + 0.183f * s;   // M
+    JM_cusp.x *= 1.0f + smoothJ * s;   // J
+    JM_cusp.y *= 1.0f + smoothM * s;   // M
 
     float J_intersect_source = solve_J_intersect(JM_source, J_focus, J_max, slope_gain);
     float J_intersect_cusp = solve_J_intersect(JM_cusp, J_focus, J_max, slope_gain);
@@ -2376,8 +2380,8 @@ float3 uncompress_bjorn(float3 xyz)
 
     // Chroma compression scaling for HDR/SDR appearance match
     float log_peak = log10(daniele_n / daniele_n_r);
-    compr = chroma_compress + (chroma_compress * 5.0f) * log_peak;
-    sat = max(0.15f, chroma_expand - (chroma_expand * 0.78f) * log_peak);
+    compr = chroma_compress + chroma_compress * chroma_compress_fact * log_peak;
+    sat = max(0.15f, chroma_expand - chroma_expand * chroma_expand_fact * log_peak);
     sat_thr = chroma_expand_thr / daniele_n;
 
     // Gamut mapper focus distance scaling with peak luminance for
