@@ -322,10 +322,10 @@ local:
   // so that the 'gamutCuspTable' starts with the lowest JMh.h value
   // both tables need to be declared here since temporary array variables
   // in the init() fuction seem to crash Nuke on some systems
-  float3 gamutCuspTable[gamutCuspTableSize + 1];
-  float3 gamutCuspTableReach[gamutCuspTableSize + 1];
-  float3 cgamutCuspTable[gamutCuspTableSize + 1];
-  float3 cgamutReachTable[gamutCuspTableSize + 1];
+  float4 gamutCuspTable[gamutCuspTableSize + 1];
+  float4 gamutCuspTableReach[gamutCuspTableSize + 1];
+  float4 cgamutCuspTable[gamutCuspTableSize + 1];
+  float4 cgamutReachTable[gamutCuspTableSize + 1];
   float2 gamutGammas[gamutCuspTableSize + 1];
   float  LocusLimitMTable[gamutCuspTableSize + 1];
 
@@ -352,19 +352,19 @@ local:
   }
 
   // linear interpolation between two values a & b with the bias t
-  inline float lerp(float a, float b, float t)
+  inline float lerp1D(float a, float b, float t)
   {
     return a + t * (b - a);
   }
-  inline float2 lerp(float2 a, float2 b, float t)
+  inline float2 lerp1D(float2 a, float2 b, float t)
   {
     return a + t * (b - a);
   }
-  inline float3 lerp(float3 a, float3 b, float t)
+  inline float3 lerp1D(float3 a, float3 b, float t)
   {
     return a + t * (b - a);
   }
-  inline float4 lerp(float4 a, float4 b, float t)
+  inline float4 lerp1D(float4 a, float4 b, float t)
   {
     return a + t * (b - a);
   }
@@ -629,7 +629,8 @@ local:
     newMatrix.setArray(MdataNukeOrder);
 
     // create inverse matrix
-    float3x3 newMatrixInverse = newMatrix.invert();
+    float3x3 newMatrixInverse = newMatrix;
+    newMatrixInverse = newMatrixInverse.invert();
 
     // return forward or inverse matrix
     if (direction == 0)
@@ -1247,8 +1248,8 @@ local:
 
   float2 cuspFromTable(float h)
   {
-    float3 lo;
-    float3 hi;
+    float4 lo;
+    float4 hi;
     if (h <= gamutCuspTable[0].z)
     {
       lo   = gamutCuspTable[gamutCuspTableSize - 1];
@@ -1279,8 +1280,8 @@ local:
 
     float t = (h - lo.z) / (hi.z - lo.z);
 
-    float cuspJ = lerp(lo.x, hi.x, t);
-    float cuspM = lerp(lo.y, hi.y, t);
+    float cuspJ = lerp1D(lo.x, hi.x, t);
+    float cuspM = lerp1D(lo.y, hi.y, t);
 
     return float2(cuspJ, cuspM);
   }
@@ -1296,14 +1297,14 @@ local:
     const float t        = h - base_hue;
 
     const float cuspJ = 69;
-    const float cuspM = lerp(lo, hi, t);
+    const float cuspM = lerp1D(lo, hi, t);
     return float2(cuspJ, cuspM);
   }
 
   float2 ccuspFromTable(float h)
   {
-    float3 lo;
-    float3 hi;
+    float4 lo;
+    float4 hi;
 
     if (h <= cgamutCuspTable[0].z)
     {
@@ -1330,13 +1331,12 @@ local:
         i = midpoint(low_i, high_i);
       }
       lo = cgamutCuspTable[high_i - 1];
-      hi = cgamutCuspTable[high_i];
-    }
-
+      hi = cgamutCuspTable[high_i];   
+         
+    } 
     float t = (h - lo.z) / (hi.z - lo.z);
-
-    float cuspJ = lerp(lo.x, hi.x, t);
-    float cuspM = lerp(lo.y, hi.y, t);
+    float cuspJ = lerp1D(lo.x, hi.x, t);
+    float cuspM = lerp1D(lo.y, hi.y, t);
 
     return float2(cuspJ, cuspM);
   }
@@ -1365,11 +1365,11 @@ local:
   {
     const int i_lo = hue_position_in_uniform_table(h, gamutCuspTableSize);
 
-    const float3 lo = cgamutReachTable[i_lo];
-    const float3 hi = cgamutReachTable[i_lo + 1];
+    const float4 lo = cgamutReachTable[i_lo];
+    const float4 hi = cgamutReachTable[i_lo + 1];
 
     const float t = (h - lo.z) / (hi.z - lo.z);
-    return lerp(lo.y, hi.y, t);
+    return lerp1D(lo.y, hi.y, t);
   }
 
   float daniele_evo_fwd(float Y)
@@ -1392,7 +1392,8 @@ local:
   {
     float2 JMcusp = ccuspFromTable(h);
     float  hr     = radians(h);
-
+    
+    
     float e_t = 1.0f;
 
     // CAM16
@@ -1464,9 +1465,10 @@ local:
   float chromaCompression(float3 JMh, float origJ, float linear, int invert)
   {
     float M = JMh.y;
+    
     if (M == 0.0f)
       return M;
-
+    
     float nJ    = JMh.x / limitJmax;
     float snJ   = max(0.0f, 1.0f - nJ);
     float Mnorm = cusp_with_eccentricity_factor(JMh.z);
@@ -1483,7 +1485,6 @@ local:
       {
         // Normalize M with the rendering space cusp M
         M /= Mnorm;
-
         // Expand the colorfulness by running the toe function in reverse.  The goal is to
         // expand less saturated colors less and more saturated colors more.  The expansion
         // increases saturation in the shadows and mid-tones but not in the highlights.
@@ -1677,7 +1678,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
     const float base_hue = base_hue_for_position(i_lo, gamutCuspTableSize);
     const float t        = h - base_hue;
 
-    return lerp(gamutGammas[i_lo], gamutGammas[i_lo + 1], t);
+    return lerp1D(gamutGammas[i_lo], gamutGammas[i_lo + 1], t);
   }
 
   // reimplemented from https://github.com/nick-shaw/aces-ot-vwg-experiments/blob/master/python/intersection_approx.py
@@ -1724,7 +1725,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
 
     // Scale the cusp outward when smoothing to avoid reducing the gamut.  Reduce
     // smoothing for high cusps because smin() will bias it too much for the longer line.
-    float s = max(lerp(smoothing, smoothing * 0.05f, cusp.x / limitJmax), 0.0001f);
+    float s = max(lerp1D(smoothing, smoothing * 0.05f, cusp.x / limitJmax), 0.0001f);
     cusp.y *= 1.0f + 0.18f * s;
     cusp.x *= 1.0f + 0.07f * s;
 
@@ -1790,16 +1791,16 @@ float Y_to_Hellwig_J(float Y, float3 surround)
 
     const int i_lo = hue_position_in_uniform_table(h, gamutCuspTableSize);
 
-    const float3 lo = gamutCuspTableReach[i_lo];
-    const float3 hi = gamutCuspTableReach[i_lo + 1];
+    const float4 lo = gamutCuspTableReach[i_lo];
+    const float4 hi = gamutCuspTableReach[i_lo + 1];
 
     const float t = (h - lo.z) / (hi.z - lo.z);
 
-    const float reachMaxM = lerp(lo.y, hi.y, t);
+    const float reachMaxM = lerp1D(lo.y, hi.y, t);
     if (reachNick)
     {
       float2 JMcusp     = cuspFromTable(Jmh.z);
-      float  focusJ     = lerp(JMcusp.x, midJ, min(1.0f, cuspMidBlend - (JMcusp.x / limitJmax)));
+      float  focusJ     = lerp1D(JMcusp.x, midJ, min(1.0f, cuspMidBlend - (JMcusp.x / limitJmax)));
       float  slope_gain = limitJmax * focusDist * getFocusGain(Jmh.x, JMcusp.x);
       float  intersectJ = solve_J_intersect(float2(Jmh.x, Jmh.y), focusJ, limitJmax, slope_gain);
       float  slope;
@@ -1857,37 +1858,37 @@ float Y_to_Hellwig_J(float Y, float3 surround)
       if (h >= angleR && h < angleY)
       {
         lerpVal = (h - angleR) / (angleY - angleR);
-        return lerp(compressionFuncParamsR, compressionFuncParamsY, lerpVal);
+        return lerp1D(compressionFuncParamsR, compressionFuncParamsY, lerpVal);
       }
       if (h >= angleY && h < angleG)
       {
         lerpVal = (h - angleY) / (angleG - angleY);
-        return lerp(compressionFuncParamsY, compressionFuncParamsG, lerpVal);
+        return lerp1D(compressionFuncParamsY, compressionFuncParamsG, lerpVal);
       }
       if (h >= angleG && h < angleC)
       {
         lerpVal = (h - angleG) / (angleC - angleG);
-        return lerp(compressionFuncParamsG, compressionFuncParamsC, lerpVal);
+        return lerp1D(compressionFuncParamsG, compressionFuncParamsC, lerpVal);
       }
       if (h >= angleC && h < angleB)
       {
         lerpVal = (h - angleC) / (angleB - angleC);
-        return lerp(compressionFuncParamsC, compressionFuncParamsB, lerpVal);
+        return lerp1D(compressionFuncParamsC, compressionFuncParamsB, lerpVal);
       }
       if (h >= angleB && h < angleM)
       {
         lerpVal = (h - angleB) / (angleM - angleB);
-        return lerp(compressionFuncParamsB, compressionFuncParamsM, lerpVal);
+        return lerp1D(compressionFuncParamsB, compressionFuncParamsM, lerpVal);
       }
       if (h >= angleM && h < angleR + 360.0f)
       {
         lerpVal = (h - angleM) / (angleR + 360.0f - angleM);
-        return lerp(compressionFuncParamsM, compressionFuncParamsR, lerpVal);
+        return lerp1D(compressionFuncParamsM, compressionFuncParamsR, lerpVal);
       }
       if (h < angleR)
       {
         lerpVal = (h + 360.0f - angleM) / (angleR + 360.0f - angleM);
-        return lerp(compressionFuncParamsM, compressionFuncParamsR, lerpVal);
+        return lerp1D(compressionFuncParamsM, compressionFuncParamsR, lerpVal);
       }
       else
       {
@@ -1902,7 +1903,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
     if (disableFocusGain)
       return 1.0f;
 
-    float thr = lerp(cuspJ, limitJmax, focusGainBlend);
+    float thr = lerp1D(cuspJ, limitJmax, focusGainBlend);
     if (J > thr)
     {
       // Approximate inverse required above threshold
@@ -1931,7 +1932,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
       float  Jx     = JMh.x;
 
       // Analytic inverse below threshold
-      if (Jx <= lerp(JMcusp.x, limitJmax, focusGainBlend))
+      if (Jx <= lerp1D(JMcusp.x, limitJmax, focusGainBlend))
         return compressGamut2(JMh, 1, Jx);
 
       // Approximation above
@@ -1951,7 +1952,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
       return JMh;
 
     // Calculate where the out of gamut color is projected to
-    float focusJ = lerp(JMcusp.x, midJ, min(1.0f, cuspMidBlend - (JMcusp.x / limitJmax)));
+    float focusJ = lerp1D(JMcusp.x, midJ, min(1.0f, cuspMidBlend - (JMcusp.x / limitJmax)));
 
     // https://www.desmos.com/calculator/9u0wiiz9ys
     float Mratio = project_from.y / (focusDist * JMcusp.y);
@@ -1964,7 +1965,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
     float c      = project_from.x < focusJ ? c0 : c1;
 
     // XXX this sqrt can cause NaNs (subtraction goes negative)
-    float J0       = sqrt(b * b - 4 * a * c);
+    float J0       = sqrt(b * b - 4.f * a * c);
     float J1       = (-b - J0) / (2 * a);
     J0             = (-b + J0) / (2 * a);
     float projectJ = project_from.x < focusJ ? J0 : J1;
@@ -2007,7 +2008,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
 
     if (!Reachcompressmode)
       interpolatedCompressionFuncParams.x =
-        1.0f / lerp(interpolatedCompressionFuncParams.z, interpolatedCompressionFuncParams.y, projectJ / limitJmax);
+        1.0f / lerp1D(interpolatedCompressionFuncParams.z, interpolatedCompressionFuncParams.y, projectJ / limitJmax);
 
     // Compress the out of gamut color along the projection line
     float2 JMcompressed = project_from;
@@ -2018,7 +2019,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
     {
       float v      = project_from.y / JMboundary.y;
       v            = compressPowerP(v, interpolatedCompressionFuncParams.x,
-                                    lerp(interpolatedCompressionFuncParams.z, interpolatedCompressionFuncParams.y, projectJ / limitJmax),
+                                    lerp1D(interpolatedCompressionFuncParams.z, interpolatedCompressionFuncParams.y, projectJ / limitJmax),
                                     interpolatedCompressionFuncParams.w, invert);
       JMcompressed = project_to + v * (JMboundary - project_to);
     }
@@ -2209,11 +2210,13 @@ float Y_to_Hellwig_J(float Y, float3 surround)
 
     // populate the input primaries matrix
     RGB_to_XYZ_input = generate_RGB_to_XYZ_matrix(primariesIn);
-    XYZ_to_RGB_input = RGB_to_XYZ_input.invert();
+    XYZ_to_RGB_input = RGB_to_XYZ_input;
+    XYZ_to_RGB_input = XYZ_to_RGB_input.invert();
 
     // AP1 matrix
     AP1_to_XYZ = generate_RGB_to_XYZ_matrix(1); // AP1 == 1
-    XYZ_to_AP1 = AP1_to_XYZ.invert();
+    XYZ_to_AP1 = AP1_to_XYZ;
+    XYZ_to_AP1 = XYZ_to_AP1.invert();
 
     // populate the limiting primaries matrix
     // RGBPrimsToXYZMatrix
@@ -2273,13 +2276,16 @@ float Y_to_Hellwig_J(float Y, float3 surround)
     }
 
     RGB_to_XYZ_limit = RGBPrimsToXYZMatrix(limitRedForMatrix, limitGreenForMatrix, limitBlueForMatrix, limitWhiteForMatrix, 1.0f, 0);
-    XYZ_to_RGB_limit = RGB_to_XYZ_limit.invert();
+    XYZ_to_RGB_limit = RGB_to_XYZ_limit;
+    XYZ_to_RGB_limit = XYZ_to_RGB_limit.invert();
 
     RGB_to_XYZ_reach = generate_RGB_to_XYZ_matrix(primariesReach);
-    XYZ_to_RGB_reach = RGB_to_XYZ_reach.invert();
+    XYZ_to_RGB_reach = RGB_to_XYZ_reach;
+    XYZ_to_RGB_reach = XYZ_to_RGB_reach.invert();
 
     RGB_to_XYZ_output = generate_RGB_to_XYZ_matrix(primariesOut);
-    XYZ_to_RGB_output = RGB_to_XYZ_output.invert();
+    XYZ_to_RGB_output = RGB_to_XYZ_output;
+    XYZ_to_RGB_output = XYZ_to_RGB_output.invert();
 
     float3 white(1.0f, 1.0f, 1.0f);
     inWhite    = vector_dot(RGB_to_XYZ_input, white);
@@ -2300,7 +2306,8 @@ float Y_to_Hellwig_J(float Y, float3 surround)
     {
       CAT_CAT16 = RGBPrimsToXYZMatrix(rxy, gxy, bxy, wxy, 1.0f, 1);
     }
-    CAT_CAT16_INVERSE = CAT_CAT16.invert();
+    CAT_CAT16_INVERSE = CAT_CAT16;
+    CAT_CAT16_INVERSE = CAT_CAT16_INVERSE.invert();
 
     generate_panlrcm();
 
@@ -2337,9 +2344,12 @@ float Y_to_Hellwig_J(float Y, float3 surround)
     {
       RGB_to_XYZ_cgReach = generate_RGB_to_XYZ_matrix(3);
     }
-    const float3x3 XYZ_to_RGB_cgReach = RGB_to_XYZ_cgReach.invert();
+    float3x3 XYZ_to_RGB_cgReach = RGB_to_XYZ_cgReach;
+    XYZ_to_RGB_cgReach = XYZ_to_RGB_cgReach.invert();
 
     initialise_cusp_table(cgamutCuspTable, gamutCuspTableSize, inWhite, RGB_to_XYZ_cgReach);
+    
+    
     initialise_reach_cusp_table(cgamutReachTable, gamutCuspTableSize, limitJmax, inWhite, XYZ_to_RGB_cgReach);
 
     // With gamut mapper reach mode 7, use the chroma compression reach space with the
@@ -2359,20 +2369,21 @@ float Y_to_Hellwig_J(float Y, float3 surround)
     initialise_lower_hull_gamma();
   }
 
-  void initialise_cusp_table(float3 output_table[], const int table_size, float3 refWhite, const float3x3& matrix)
+  void initialise_cusp_table(float4 output_table[], const int table_size, float3 refWhite, const float3x3& matrix)
   {
     // the 'tempTableUnsorted' table is populated
     // in increments of H of the limiting gamut HSV space starting at H=0.0
     // since it is unlikely that HSV.H=0 and JMh.h=0 line up
     // the entries are then wrap-around shifted
     // so that the 'gamutCuspTable' starts with the lowest JMh.h value
-    float3 tempTableUnsorted[gamutCuspTableSize];
+    float4 tempTableUnsorted[gamutCuspTableSize];
     int    minhIndex = 0;
     for (int i = 0; i < table_size; ++i)
     {
       const float  hNorm   = float(i) / (table_size);
       const float3 RGB     = HSV_to_RGB(float3(hNorm, 1.0f, 1.0f));
-      tempTableUnsorted[i] = RGB_to_JMh(RGB, refWhite, matrix);
+      const float3 t = RGB_to_JMh(RGB, refWhite, matrix);
+      tempTableUnsorted[i] = float4(t.x, t.y, t.z, 1.f);
       if (tempTableUnsorted[i].z < tempTableUnsorted[minhIndex].z)
       {
         minhIndex = i;
@@ -2385,7 +2396,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
     output_table[gamutCuspTableSize].z = output_table[gamutCuspTableSize].z + 360.0f;
   }
 
-  void copy_table_rotated(float3 tableUnsorted[], const int tableSize, float3 output_table[], const int offsetIndex)
+  void copy_table_rotated(float4 tableUnsorted[], const int tableSize, float4 output_table[], const int offsetIndex)
   {
     for (int i = 0; i < tableSize; ++i)
     {
@@ -2393,7 +2404,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
     }
   }
 
-  void initialise_reach_cusp_table(float3 output_table[], const int table_size, const float limitJ, float3 refWhite, const float3x3& matrix)
+  void initialise_reach_cusp_table(float4 output_table[], const int table_size, const float limitJ, float3 refWhite, const float3x3& matrix)
   {
     const float search_range = 100.0;
     for (int i = 0; i < table_size; ++i)
@@ -2449,7 +2460,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
 
   bool evaluate_upper_hull_gamma_fit(const float2 JMcusp, float3 testJmh[], const int test_count, const float topGamma)
   {
-    const float focusJ = lerp(JMcusp.x, midJ, min(1.0, cuspMidBlend - (JMcusp.x / limitJmax)));
+    const float focusJ = lerp1D(JMcusp.x, midJ, min(1.0, cuspMidBlend - (JMcusp.x / limitJmax)));
     for (int testIndex = 0; testIndex < test_count; ++testIndex)
     {
       const float  slope_gain  = limitJmax * focusDist * getFocusGain(testJmh[testIndex].x, JMcusp.x);
@@ -2542,7 +2553,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
 
   bool evaluate_lower_hull_gamma_fit(const float2 JMcusp, float3 testJmh[], const int test_count, const float bottomGamma)
   {
-    const float focusJ = lerp(JMcusp.x, midJ, cuspMidBlend);
+    const float focusJ = lerp1D(JMcusp.x, midJ, cuspMidBlend);
     for (int testIndex = 0; testIndex < test_count; ++testIndex)
     {
       const float slope_gain = limitJmax * focusDist * getFocusGain(testJmh[testIndex].x, JMcusp.x);
@@ -2762,7 +2773,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
     else if (diagnosticMode == 25)
     {
       float2 JMcusp            = cuspFromTable(srcRGB.z);
-      float  focusJ            = lerp(JMcusp.x, midJ, min(1.0f, cuspMidBlend - (JMcusp.x / limitJmax)));
+      float  focusJ            = lerp1D(JMcusp.x, midJ, min(1.0f, cuspMidBlend - (JMcusp.x / limitJmax)));
       float  slope_gain        = limitJmax * focusDist * getFocusGain(JMh.x, JMcusp.x);
       const float2 gammas      = hueDependantHullGammas(srcRGB.z);
       float3 nickBoundryReturn = findGamutBoundaryIntersection(srcRGB, JMcusp, focusJ, limitJmax, slope_gain, smoothCusps, gammas.x, gammas.y);
@@ -2784,7 +2795,7 @@ float Y_to_Hellwig_J(float Y, float3 surround)
       // output
       float2 JMcusp = cuspFromTable(srcRGB.z);
       const float2 gammas = hueDependantHullGammas(srcRGB.z);
-      diagnostic    = findGamutBoundaryIntersection(srcRGB, JMcusp, lerp(JMcusp.x, midJ, cuspMidBlend), limitJmax, 10000.0f, 0.0f,
+      diagnostic    = findGamutBoundaryIntersection(srcRGB, JMcusp, lerp1D(JMcusp.x, midJ, cuspMidBlend), limitJmax, 10000.0f, 0.0f,
                                                     gammas.x, gammas.y);
     }
 
